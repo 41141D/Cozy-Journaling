@@ -24,9 +24,10 @@ class MainWindow(QWidget):
             x = random.randint(1,1530)
             y = random.randint(1,760)
             brightness = random.randint(0,255)
-            self.stars.append([x,y,brightness])
+            radius = random.randint(0,12)
+            self.stars.append([x,y,brightness,radius])
         self.timer = QTimer()
-        self.timer.start(1000)
+        self.timer.start(33)
         self.timer.timeout.connect(self.update_time)
         self.styling()
         self.update_time()
@@ -35,9 +36,9 @@ class MainWindow(QWidget):
         painter = QPainter(self)
         painter.fillRect(self.rect(),QColor(self.current_sky_color))
         if current_hour >= 19 or current_hour < 6:
-            for x,y,brightness in self.stars:
-                painter.setBrush(QColor(255,255,255,brightness))
-                painter.drawEllipse(x,y,2,2)
+            for x,y,brightness,radius in self.stars:
+                painter.setBrush(QColor(255,255,255,brightness)) 
+                painter.drawEllipse(x,y,radius,radius)
         painter.setBrush(QColor("#EF8E38"))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(0,self.sun_y,100,100)
