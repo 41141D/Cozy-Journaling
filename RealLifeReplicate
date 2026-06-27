@@ -1,0 +1,87 @@
+import random
+import sys
+import datetime
+from PyQt6.QtGui import QPainter, QColor
+from PyQt6.QtWidgets import QApplication,QWidget,QLabel
+from PyQt6.QtCore import Qt, QTimer
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.sky_colors = [
+            QColor("#050B14"), QColor("#050B14"), QColor("#050B14"), QColor("#050B14"), QColor("#0A1128"),
+            QColor("#1C1A27"), QColor("#3F2B47"),
+            QColor("#D97443"), QColor("#E69D5E"),
+            QColor("#4A90E2"), QColor("#4A90E2"), QColor("#4A90E2"), QColor("#4A90E2"),
+            QColor("#4A90E2"), QColor("#4A90E2"), QColor("#4A90E2"), QColor("#5FA7F2"),
+            QColor("#F27A54"), QColor("#F27A54"), QColor("#A14465"),
+            QColor("#2C3E50"), QColor("#2C3E50"), QColor("#1A2536"), QColor("#050B14")
+        ]
+        self.current_sky_color = None
+        self.label = QLabel(self)
+        self.setGeometry(5,45,1530,760)
+        self.stars = []
+        for i in range(1000):
+            x = random.randint(1,1530)
+            y = random.randint(1,760)
+            brightness = random.randint(0,255)
+            self.stars.append([x,y,brightness])
+        self.timer = QTimer()
+        self.timer.start(1000)
+        self.timer.timeout.connect(self.update_time)
+        self.styling()
+        self.update_time()
+    def paintEvent(self,event):
+        current_hour = self.date.hour
+        painter = QPainter(self)
+        painter.fillRect(self.rect(),QColor(self.current_sky_color))
+        if current_hour >= 19 or current_hour < 6:
+            for x,y,brightness in self.stars:
+                painter.setBrush(QColor(255,255,255,brightness))
+                painter.drawEllipse(x,y,2,2)
+        painter.setBrush(QColor("#EF8E38"))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(0,self.sun_y,100,100)
+        painter.setBrush(QColor("#F6F1D5"))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(0,self.moon_y,100,100)
+    def update_time(self):
+        self.date = datetime.datetime.now()
+        self.seconds_today = (self.date.hour * 3600) + (self.date.minute * 60) + self.date.second
+        if self.seconds_today < 43200:
+            self.moon_y = int(self.seconds_today * (800 / 43200))
+            self.sun_y = int(800 - (self.seconds_today * (800 / 43200)))
+        else:
+            elapsed = self.seconds_today - 43200
+            self.moon_y = int(800 - (elapsed * (800 / 43200)))
+            self.sun_y = int(elapsed * (800 / 43200))
+
+        self.label.setText(self.date.strftime("%H:%M:%S"))
+        self.label.setGeometry(690,363,153,50)
+        for star in self.stars:
+            star[2] += random.randint(-50,50)
+            star[2] = max(50,min(255,star[2]))
+        current_hour = self.date.hour
+        current_minute = self.date.minute
+        current_second = self.date.second
+        next_hour = (current_hour + 1) % 24
+        hour_progress = ((current_minute * 60) + current_second) / 3600.0
+        start_color = self.sky_colors[current_hour]
+        end_color = self.sky_colors[next_hour]
+        r = int(start_color.red() + (end_color.red() - start_color.red()) * hour_progress)
+        g = int(start_color.green() + (end_color.green() - start_color.green()) * hour_progress)
+        b = int(start_color.blue() + (end_color.blue() - start_color.blue()) * hour_progress)
+        self.current_sky_color = QColor(r, g, b)
+        self.update()
+    def styling(self):
+        self.setStyleSheet("""
+        QLabel {color:white;
+        font-size: 30px;
+        font-weight: bold;
+        font-family: Verdana;
+        }
+        """)
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
